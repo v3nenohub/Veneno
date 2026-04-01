@@ -1,0 +1,30 @@
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+if _G.AutoMinigame then
+    _G.AutoMinigame = false
+    return
+end
+
+_G.AutoMinigame = true
+
+task.spawn(function()
+    while _G.AutoMinigame do
+        local Gui = LP.PlayerGui:FindFirstChild("Gen")
+        if Gui then
+            local Main = Gui:FindFirstChild("MainFrame")
+            if Main and Main.Visible then
+                local Evt = Gui.GeneratorMain:FindFirstChild("Event")
+                if Evt then
+                    Evt:FireServer({
+                        ["Lever"] = true,
+                        ["Switches"] = true,
+                        ["Wires"] = true
+                    })
+                    task.wait(0.6)
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end)
