@@ -1,0 +1,28 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+if _G.Noclip_Active then
+    _G.Noclip_Active = false
+    return
+end
+
+_G.Noclip_Active = true
+
+local function toggleNoclip()
+    local char = localPlayer.Character
+    if char and _G.Noclip_Active then
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.Noclip_Active do
+        toggleNoclip()
+        RunService.Stepped:Wait()
+    end
+end)
