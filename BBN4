@@ -1,0 +1,100 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local isMobile = game:GetService("UserInputService").TouchEnabled
+
+if _G.FullESP_Veneno then
+    _G.FullESP_Veneno = false
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v.Name == "VENENO_TOTAL" then pcall(function() v:Destroy() end) end
+    end
+    return
+end
+
+_G.FullESP_Veneno = true
+
+local function applyESP(char, type)
+    if not char or char:FindFirstChild("VENENO_TOTAL") or char.Name == Players.LocalPlayer.Name then return end
+    local hum = char:FindFirstChildWhichIsA("Humanoid")
+    local isKiller = (type == "K")
+    local mainColor = isKiller and Color3.new(1, 0, 0) or Color3.new(0, 1, 0)
+
+    local container = Instance.new("Folder", char); container.Name = "VENENO_TOTAL"
+
+    local high = Instance.new("Highlight", container)
+    high.FillColor = mainColor
+    high.OutlineColor = mainColor
+    high.FillTransparency = isKiller and 0.5 or 1
+    high.OutlineTransparency = 0
+    high.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    high.Adornee = char
+
+    local att = Instance.new("Attachment", char:FindFirstChild("HumanoidRootPart")); att.Name = "VENENO_TOTAL"
+    att.Position = Vector3.new(0, 4, 0)
+
+    local bill = Instance.new("BillboardGui", container)
+    bill.Size = UDim2.new(0, 120, 0, 60)
+    bill.AlwaysOnTop = true
+    bill.Adornee = att
+
+    local list = Instance.new("UIListLayout", bill)
+    list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    list.SortOrder = Enum.SortOrder.LayoutOrder
+    list.Padding = UDim.new(0, 2)
+
+    local function createLabel(col, order, size)
+        local l = Instance.new("TextLabel", bill)
+        l.Size = UDim2.new(1, 0, 0, size)
+        l.BackgroundTransparency = 1
+        l.Font = Enum.Font.Arcade
+        l.TextSize = isMobile and 10 or 12
+        l.TextColor3 = col
+        l.TextStrokeTransparency = 0
+        l.LayoutOrder = order
+        return l
+    end
+
+    local nL = createLabel(mainColor, 1, 15)
+    nL.Text = char.Name
+    
+    local hL, sL
+    if not isKiller and hum then
+        hL = createLabel(Color3.new(1, 1, 1), 2, 12)
+    end
+    sL = createLabel(Color3.new(1, 1, 0), 3, 12)
+
+    local function update()
+        if hL and hum then
+            hL.Text = "HP: " .. math.floor((hum.Health / hum.MaxHealth) * 100) .. "%"
+        end
+        sL.Text = "STAM: " .. math.floor(char:GetAttribute("Stamina") or 100) .. "%"
+    end
+
+    if hum then hum:GetPropertyChangedSignal("Health"):Connect(update) end
+    char:GetAttributeChangedSignal("Stamina"):Connect(update)
+    update()
+end
+
+local function scan()
+    local pFolder = Workspace:FindFirstChild("PLAYERS")
+    if pFolder then
+        local alive = pFolder:FindFirstChild("ALIVE")
+        local killer = pFolder:FindFirstChild("KILLER")
+        if alive then
+            for _, m in pairs(alive:GetChildren()) do
+                if m:IsA("Model") then applyESP(m, "A") end
+            end
+        end
+        if killer then
+            for _, m in pairs(killer:GetChildren()) do
+                if m:IsA("Model") then applyESP(m, "K") end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.FullESP_Veneno do
+        scan()
+        task.wait(1.5)
+    end
+end)
