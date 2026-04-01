@@ -1,0 +1,44 @@
+local Workspace = game:GetService("Workspace")
+
+if _G.TrapESP_Active then
+    _G.TrapESP_Active = false
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v.Name == "VENENO" then
+            pcall(function() v:Destroy() end)
+        end
+    end
+    return
+end
+
+_G.TrapESP_Active = true
+
+local function applyESP(obj)
+    if not obj:FindFirstChild("VENENO") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "VENENO"
+        highlight.Adornee = obj
+        highlight.FillTransparency = 1
+        highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineTransparency = 0
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = obj
+    end
+end
+
+local function scan()
+    local ignoreFolder = Workspace:FindFirstChild("IGNORE")
+    if ignoreFolder then
+        for _, obj in ipairs(ignoreFolder:GetDescendants()) do
+            if obj.Name == "Trap" and (obj:IsA("BasePart") or obj:IsA("Model")) then
+                applyESP(obj)
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.TrapESP_Active do
+        scan()
+        task.wait(1.5)
+    end
+end)
