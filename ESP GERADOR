@@ -1,0 +1,103 @@
+local Workspace = game:GetService("Workspace")
+
+if _G.ESP_GENERATORS then
+    _G.ESP_GENERATORS = false
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v.Name == "VENENO" then
+            pcall(function() v:Destroy() end)
+        end
+    end
+    return
+end
+
+_G.ESP_GENERATORS = true
+
+local activeGenerators = {}
+
+local function clearGenerator(generator)
+    if activeGenerators[generator] then
+        pcall(function() activeGenerators[generator]:Destroy() end)
+        activeGenerators[generator] = nil
+    end
+end
+
+local function createGeneratorESP(generator)
+    if not generator or not generator.Parent or activeGenerators[generator] then return end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "VENENO"
+    highlight.Adornee = generator
+    highlight.FillTransparency = 1 -- Apenas Outline
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    
+    local function updateColor()
+        if not highlight or not highlight.Parent then return end
+        local progress = generator:GetAttribute("Progress") or 0
+        if progress >= 100 then
+            highlight.OutlineColor = Color3.fromRGB(0, 255, 0) -- Verde quando pronto
+        else
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 0) -- Amarelo em progresso
+        end
+    end
+    
+    updateColor()
+    highlight.Parent = generator
+    
+    local connection
+    connection = generator:GetAttributeChangedSignal("Progress"):Connect(function()
+        if not _G.ESP_GENERATORS or not highlight.Parent then
+            connection:Disconnect()
+            return
+        end
+        updateColor()
+    end)
+    
+    activeGenerators[generator] = highlight
+end
+
+local function scanGenerators()
+    if not _G.ESP_GENERATORS then return end
+    local mapsFolder = Workspace:FindFirstChild("MAPS")
+    local gameMap = mapsFolder and mapsFolder:FindFirstChild("GAME MAP")
+    local generatorsFolder = gameMap and gameMap:FindFirstChild("Generators")
+    
+    if generatorsFolder then
+        for _, generator in pairs(generatorsFolder:GetChildren()) do
+            if generator:IsA("Model") then
+                createGeneratorESP(generator)
+            end
+        end
+    end
+end
+
+local mapsFolder = Workspace:FindFirstChild("MAPS")
+if mapsFolder then
+    task.spawn(function()
+        local gameMap = mapsFolder:WaitForChild("GAME MAP", 5)
+        if gameMap then
+            local generatorsFolder = gameMap:WaitForChild("Generators", 5)
+            if generatorsFolder then
+                generatorsFolder.ChildAdded:Connect(function(generator)
+                    if _G.ESP_GENERATORS then
+                        task.wait(0.2)
+                        if generator:IsA("Model") then createGeneratorESP(generator) end
+                    end
+                end)
+                
+                generatorsFolder.ChildRemoved:Connect(function(generator)
+                    clearGenerator(generator)
+                end)
+            end
+        end
+    end)
+end
+
+scanGenerators()
+
+task.spawn(function()
+    while _G.ESP_GENERATORS do
+        scanGenerators()
+        task.wait(1.5)
+    end
+end)
