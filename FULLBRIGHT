@@ -1,0 +1,32 @@
+local Lighting = game:GetService("Lighting")
+
+if _G.FullBrightActive then
+    if _G.BrightConn then _G.BrightConn:Disconnect() _G.BrightConn = nil end
+
+    Lighting.Brightness = _G.OrigBright or 2
+    Lighting.ClockTime = _G.OrigTime or 14
+    Lighting.FogEnd = _G.OrigFog or 100000
+    Lighting.GlobalShadows = _G.OrigShadows ~= nil and _G.OrigShadows or true
+    Lighting.Ambient = _G.OrigAmbient or Color3.fromRGB(0, 0, 0)
+
+    _G.FullBrightActive = nil
+    return
+end
+
+_G.FullBrightActive = true
+_G.OrigBright = Lighting.Brightness
+_G.OrigTime = Lighting.ClockTime
+_G.OrigFog = Lighting.FogEnd
+_G.OrigShadows = Lighting.GlobalShadows
+_G.OrigAmbient = Lighting.Ambient
+
+local function SetBright()
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14
+    Lighting.FogEnd = 100000
+    Lighting.GlobalShadows = false
+    Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+end
+
+_G.BrightConn = Lighting.Changed:Connect(SetBright)
+SetBright()
