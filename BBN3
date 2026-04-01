@@ -1,0 +1,44 @@
+local Workspace = game:GetService("Workspace")
+
+if _G.BatteryESP_Active then
+    _G.BatteryESP_Active = false
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v.Name == "VENENO" then
+            pcall(function() v:Destroy() end)
+        end
+    end
+    return
+end
+
+_G.BatteryESP_Active = true
+
+local function applyESP(obj)
+    if not obj:FindFirstChild("VENENO") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "VENENO"
+        highlight.Adornee = obj
+        highlight.FillTransparency = 1
+        highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+        highlight.OutlineTransparency = 0
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = obj
+    end
+end
+
+local function scan()
+    local ignoreFolder = Workspace:FindFirstChild("IGNORE")
+    if ignoreFolder then
+        for _, obj in ipairs(ignoreFolder:GetDescendants()) do
+            if obj.Name == "Battery" and (obj:IsA("MeshPart") or obj:IsA("BasePart")) then
+                applyESP(obj)
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.BatteryESP_Active do
+        scan()
+        task.wait(1.5)
+    end
+end)
