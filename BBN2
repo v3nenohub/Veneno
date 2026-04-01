@@ -1,0 +1,38 @@
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+if _G.DoorAutoWin then
+    _G.DoorAutoWin:Disconnect()
+    _G.DoorAutoWin = nil
+    return
+end
+
+_G.DoorAutoWin = RunService.RenderStepped:Connect(function()
+    local pGui = LP:FindFirstChild("PlayerGui")
+    if not pGui then return end
+
+    for _, gui in ipairs(pGui:GetChildren()) do
+        if (gui.Name == "Dot" or gui.Name == "Main") and gui:GetAttribute("Active") == true then
+            local container = gui:FindFirstChild("Container")
+            if container then
+                local ball = container:FindFirstChild("Frame")
+                local target = container:FindFirstChild("Box")
+                local evt = gui:FindFirstChild("Main") and gui.Main:FindFirstChild("Event") or gui:FindFirstChild("Event")
+                
+                if ball and target then
+                    ball.Position = UDim2.new(
+                        0, 
+                        target.AbsolutePosition.X - container.AbsolutePosition.X + (target.AbsoluteSize.X / 2),
+                        0, 
+                        target.AbsolutePosition.Y - container.AbsolutePosition.Y + (target.AbsoluteSize.Y / 2)
+                    )
+                    
+                    if evt then
+                        evt:FireServer(100)
+                    end
+                end
+            end
+        end
+    end
+end)
