@@ -1,0 +1,44 @@
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local Workspace = game:GetService("Workspace")
+
+if _G.InstantInteractActive then
+    if _G.PromptShownConn then _G.PromptShownConn:Disconnect() _G.PromptShownConn = nil end
+    if _G.DescendantAddedConn then _G.DescendantAddedConn:Disconnect() _G.DescendantAddedConn = nil end
+    
+    for prompt, duration in pairs(_G.OriginalDurations or {}) do
+        if prompt and prompt.Parent then
+            prompt.HoldDuration = duration
+        end
+    end
+    
+    _G.OriginalDurations = nil
+    _G.InstantInteractActive = nil
+    return
+end
+
+_G.InstantInteractActive = true
+_G.OriginalDurations = {}
+
+local function SetInstant(prompt)
+    if not prompt:IsA("ProximityPrompt") or prompt:FindFirstAncestor("FuseBox") then 
+        return 
+    end
+
+    if not _G.OriginalDurations[prompt] then
+        _G.OriginalDurations[prompt] = prompt.HoldDuration
+    end
+    prompt.HoldDuration = 0
+end
+
+_G.PromptShownConn = ProximityPromptService.PromptShown:Connect(SetInstant)
+
+local mapsPath = Workspace:FindFirstChild("MAPS")
+if mapsPath then
+    _G.DescendantAddedConn = mapsPath.DescendantAdded:Connect(function(desc)
+        if desc:IsA("ProximityPrompt") then SetInstant(desc) end
+    end)
+
+    for _, prompt in ipairs(mapsPath:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") then SetInstant(prompt) end
+    end
+end
