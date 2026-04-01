@@ -1,0 +1,94 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local isMobile = UserInputService.TouchEnabled
+local localPlayer = Players.LocalPlayer
+
+if _G.ESP_KILLER_ADV then
+    _G.ESP_KILLER_ADV = false
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v.Name == "VENENO_K" then
+            pcall(function() v:Destroy() end)
+        end
+    end
+    return
+end
+
+_G.ESP_KILLER_ADV = true
+
+local function applyESP(character)
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    if character.Name == localPlayer.Name then return end
+    if character:FindFirstChild("VENENO_K") then return end
+
+    local container = Instance.new("Folder", character)
+    container.Name = "VENENO_K"
+
+    local highlight = Instance.new("Highlight", container)
+    highlight.Name = "VENENO_K"
+    highlight.Adornee = character
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+
+    local att = Instance.new("Attachment", character.HumanoidRootPart)
+    att.Name = "VENENO_K"
+    att.Position = Vector3.new(0, 3.5, 0)
+
+    local bill = Instance.new("BillboardGui", container)
+    bill.Name = "VENENO_K"
+    bill.Adornee = att
+    bill.Size = UDim2.new(0, 120, 0, 40)
+    bill.AlwaysOnTop = true
+
+    local layout = Instance.new("UIListLayout", bill)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 2)
+
+    local nameLabel = Instance.new("TextLabel", bill)
+    nameLabel.Size = UDim2.new(1, 0, 0, 15)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = character.Name
+    nameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+    nameLabel.Font = Enum.Font.Arcade
+    nameLabel.TextSize = isMobile and 11 or 13
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.LayoutOrder = 1
+
+    local stamLabel = Instance.new("TextLabel", bill)
+    stamLabel.Size = UDim2.new(1, 0, 0, 12)
+    stamLabel.BackgroundTransparency = 1
+    stamLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    stamLabel.Font = Enum.Font.Arcade
+    stamLabel.TextSize = isMobile and 9 or 11
+    stamLabel.TextStrokeTransparency = 0
+    stamLabel.LayoutOrder = 2
+
+    local function updateStam()
+        local stam = character:GetAttribute("Stamina") or 100
+        stamLabel.Text = "STAM: " .. math.floor(stam) .. "%"
+    end
+
+    character:GetAttributeChangedSignal("Stamina"):Connect(updateStam)
+    updateStam()
+end
+
+local function updateESP()
+    local pFolder = Workspace:FindFirstChild("PLAYERS")
+    local kFolder = pFolder and pFolder:FindFirstChild("KILLER")
+    if kFolder then
+        for _, model in pairs(kFolder:GetChildren()) do
+            if model:IsA("Model") then applyESP(model) end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.ESP_KILLER_ADV do
+        updateESP()
+        task.wait(2)
+    end
+end)
