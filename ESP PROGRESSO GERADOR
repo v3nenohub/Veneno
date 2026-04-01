@@ -1,0 +1,101 @@
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local isMobile = UserInputService.TouchEnabled
+
+if _G.ESP_GEN_PROGRESS then
+    _G.ESP_GEN_PROGRESS = false
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v.Name == "VENENO_PROGRESS" then
+            pcall(function() v:Destroy() end)
+        end
+    end
+    return
+end
+
+_G.ESP_GEN_PROGRESS = true
+local activeProgress = {}
+
+local function clearProgress(generator)
+    if activeProgress[generator] then
+        pcall(function()
+            if activeProgress[generator].container then activeProgress[generator].container:Destroy() end
+            if activeProgress[generator].conn1 then activeProgress[generator].conn1:Disconnect() end
+            if activeProgress[generator].conn2 then activeProgress[generator].conn2:Disconnect() end
+        end)
+        activeProgress[generator] = nil
+    end
+end
+
+local function createProgressESP(generator)
+    if not generator or not generator.Parent or activeProgress[generator] then return end
+    local root = generator:FindFirstChildWhichIsA("BasePart")
+    if not root then return end
+
+    local container = Instance.new("Folder")
+    container.Name = "VENENO_PROGRESS"
+    container.Parent = generator
+
+    local att = Instance.new("Attachment", root)
+    att.Name = "VENENO_PROGRESS"
+    att.Position = Vector3.new(0, 2.5, 0)
+
+    local bill = Instance.new("BillboardGui", container)
+    bill.Adornee = att
+    bill.Size = UDim2.new(0, 60, 0, 25)
+    bill.AlwaysOnTop = true
+    bill.MaxDistance = 1000
+
+    local label = Instance.new("TextLabel", bill)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextStrokeTransparency = 0
+    label.Font = Enum.Font.Arcade
+    label.TextSize = isMobile and 12 or 14
+
+    local function update()
+        local p = generator:GetAttribute("Progress") or 0
+        label.Text = math.floor(p) .. "%"
+        label.TextColor3 = p >= 100 and Color3.new(0, 1, 0) or (p >= 50 and Color3.new(1, 1, 0) or Color3.new(1, 1, 1))
+    end
+
+    update()
+
+    local conn1 = generator:GetAttributeChangedSignal("Progress"):Connect(update)
+    local conn2 = RunService.RenderStepped:Connect(function()
+        if not generator.Parent then clearProgress(generator) return end
+        local dist = (workspace.CurrentCamera.CFrame.Position - root.Position).Magnitude
+        local scale = math.clamp(100 / dist, 0.5, 1.2)
+        bill.Size = UDim2.new(0, 60 * scale, 0, 25 * scale)
+    end)
+
+    activeProgress[generator] = {container = container, conn1 = conn1, conn2 = conn2}
+end
+
+local function scan()
+    local maps = Workspace:FindFirstChild("MAPS")
+    local gMap = maps and maps:FindFirstChild("GAME MAP")
+    local gens = gMap and gMap:FindFirstChild("Generators")
+    if gens then
+        for _, g in pairs(gens:GetChildren()) do
+            if g:IsA("Model") then createProgressESP(g) end
+        end
+    end
+end
+
+local maps = Workspace:FindFirstChild("MAPS")
+if maps then
+    maps.DescendantAdded:Connect(function(d)
+        if _G.ESP_GEN_PROGRESS and d.Name == "Generators" then
+            task.wait(0.5)
+            scan()
+        end
+    end)
+end
+
+task.spawn(function()
+    while _G.ESP_GEN_PROGRESS do
+        scan()
+        task.wait(2)
+    end
+end)
