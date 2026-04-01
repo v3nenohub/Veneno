@@ -1,0 +1,24 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local localPlayer = Players.LocalPlayer
+
+if _G.Speed_Active then
+    _G.Speed_Active = false
+    return
+end
+
+_G.Speed_Active = true
+
+task.spawn(function()
+    while _G.Speed_Active do
+        local p = Workspace:FindFirstChild("PLAYERS")
+        local a = p and p:FindFirstChild("ALIVE")
+        local char = a and a:FindFirstChild(localPlayer.Name)
+
+        if char then
+            char:SetAttribute("WalkSpeed", 23)
+            char:SetAttribute("RunSpeed", 23)
+        end
+        task.wait(0.1)
+    end
+end)
