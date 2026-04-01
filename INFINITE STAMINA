@@ -1,0 +1,32 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+local function setupCharacter(char)
+	if char:GetAttribute("Running") == nil then
+		char:SetAttribute("Running", true)
+	end
+
+	if char:GetAttribute("Stamina") == nil then
+		char:SetAttribute("Stamina", math.huge)
+	end
+end
+
+if player.Character then
+	setupCharacter(player.Character)
+end
+
+player.CharacterAdded:Connect(setupCharacter)
+
+RunService.Heartbeat:Connect(function()
+	if not player.Character then return end
+
+	if player.Character:GetAttribute("Stamina") ~= math.huge then
+		player.Character:SetAttribute("Stamina", math.huge)
+	end
+
+	if player.Character:GetAttribute("Running") ~= true then
+		player.Character:SetAttribute("Running", true)
+	end
+end)
